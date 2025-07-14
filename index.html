@@ -1,0 +1,271 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Landing Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="font-sans antialiased bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function Navbar() {
+            const [cartItems, setCartItems] = React.useState(0);
+            const [searchQuery, setSearchQuery] = React.useState('');
+
+            const handleSearch = (e) => {
+                e.preventDefault();
+                alert(`Searching for: ${searchQuery}`);
+            };
+
+            return (
+                <nav class="bg-white shadow-lg fixed w-full z-10">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between h-16">
+                            <div class="flex">
+                                <div class="flex-shrink-0 flex items-center">
+                                    <span class="text-2xl font-bold text-indigo-600">ShopTrend</span>
+                                </div>
+                                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                                    <a href="#home" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Home</a>
+                                    <a href="#products" class="text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium">Products</a>
+                                    <a href="#features" class="text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium">Features</a>
+                                    <a href="#testimonials" class="text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium">Testimonials</a>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <form onSubmit={handleSearch} class="flex mr-4">
+                                    <input 
+                                        type="text" 
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search products..." 
+                                        class="border rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-r-md hover:bg-indigo-700">Search</button>
+                                </form>
+                                <div class="relative">
+                                    <button class="text-gray-500 hover:text-gray-900">
+                                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{cartItems}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            );
+        }
+
+        function Hero() {
+            return (
+                <div id="home" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white pt-20 pb-12">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center">
+                            <h1 class="text-4xl font-extrabold sm:text-5xl md:text-6xl">
+                                Discover the Latest Trends
+                            </h1>
+                            <p class="mt-3 max-w-md mx-auto text-base sm:text-lg md:mt-5 md:text-xl">
+                                Shop our curated collection of high-quality products with unbeatable prices!
+                            </p>
+                            <div class="mt-5 max-w-md mx-auto sm:flex sm:justify-center">
+                                <a href="#products" class="rounded-md bg-white text-indigo-600 px-8 py-3 text-base font-medium hover:bg-gray-100">
+                                    Shop Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ProductCard({ name, price, image }) {
+            const addToCart = () => {
+                alert(`Added ${name} to cart!`);
+            };
+
+            return (
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src={image} alt={name} class="w-full h-48 object-cover"/>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold">{name}</h3>
+                        <p class="text-gray-600">${price}</p>
+                        <button 
+                            onClick={addToCart}
+                            class="mt-4 w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700"
+                        >
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function Products() {
+            const products = [
+                { name: "Wireless Headphones", price: 99.99, image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e" },
+                { name: "Smart Watch", price: 199.99, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30" },
+                { name: "Sneakers", price: 79.99, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff" },
+                { name: "Laptop", price: 999.99, image: "https://cinema2y.com/wp-content/uploads/2021/01/%D8%A7%D9%81%D8%B6%D9%84-%D9%84%D8%A7%D8%A8%D8%AA%D9%88%D8%A8-%D9%84%D9%85%D8%B9%D8%A7%D9%84%D8%AC%D8%A9-%D8%A7%D9%84%D8%B5%D9%88%D8%B1-7.jpg" },
+            ];
+
+            return (
+                <div id="products" class="py-12 bg-gray-100">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl font-extrabold text-gray-900 text-center">Featured Products</h2>
+                        <div class="mt-6 grid grid-cols-1 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 gap-x-6">
+                            {products.map((product, index) => (
+                                <ProductCard key={index} {...product} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Features() {
+            const features = [
+                { title: "Fast Shipping", description: "Get your orders delivered in 2-3 days.", icon: "🚚" },
+                { title: "Secure Payments", description: "Shop with confidence using our secure payment gateway.", icon: "🔒" },
+                { title: "24/7 Support", description: "Our team is here to help you anytime.", icon: "📞" },
+                { title: "Money Back Guarantee", description: "Not satisfied? Return within 30 days.", icon: "💰" },
+            ];
+
+            return (
+                <div id="features" class="py-12 bg-white">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl font-extrabold text-gray-900 text-center">Why Shop With Us?</h2>
+                        <div class="mt-6 grid grid-cols-1 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 gap-x-6">
+                            {features.map((feature, index) => (
+                                <div key={index} class="text-center">
+                                    <div class="text-4xl mb-4">{feature.icon}</div>
+                                    <h3 class="text-lg font-semibold">{feature.title}</h3>
+                                    <p class="mt-2 text-gray-600">{feature.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Testimonials() {
+            const testimonials = [
+                { name: "John Doe", text: "Amazing products and fast delivery! Highly recommend!", rating: 5 },
+                { name: "Jane Smith", text: "The customer service is top-notch. Will shop again!", rating: 4 },
+                { name: "Alex Brown", text: "Great quality and affordable prices.", rating: 5 },
+            ];
+
+            return (
+                <div id="testimonials" class="py-12 bg-gray-100">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-3xl font-extrabold text-gray-900 text-center">What Our Customers Say</h2>
+                        <div class="mt-6 grid grid-cols-1 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 gap-x-6">
+                            {testimonials.map((testimonial, index) => (
+                                <div key={index} class="bg-white rounded-lg shadow-md p-6">
+                                    <p class="text-gray-600">"{testimonial.text}"</p>
+                                    <div class="mt-4 flex items-center">
+                                        <div class="text-yellow-400">{"★".repeat(testimonial.rating)}</div>
+                                        <p class="ml-2 font-semibold">{testimonial.name}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Footer() {
+            return (
+                <footer class="bg-gray-800 text-white py-12">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                                <h3 class="text-lg font-semibold">ShopTrend</h3>
+                                <p class="mt-2 text-gray-400">Your one-stop shop for the latest trends.</p>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">Quick Links</h3>
+                                <ul class="mt-2 space-y-2">
+                                    <li><a href="#products" class="text-gray-400 hover:text-white">Products</a></li>
+                                    <li><a href="#features" class="text-gray-400 hover:text-white">Features</a></li>
+                                    <li><a href="#testimonials" class="text-gray-400 hover:text-white">Testimonials</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">Contact Us</h3>
+                                <p class="mt-2 text-gray-400">Email: support@shoptrend.com</p>
+                                <p class="text-gray-400">Phone: (123) 456-7890</p>
+                            </div>
+                        </div>
+                        <div class="mt-8 border-t border-gray-700 pt-8 text-center">
+                            <p class="text-gray-400">&copy; 2025 ShopTrend. All rights reserved.</p>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        function App() {
+            return (
+                <div>
+                    <Navbar />
+                    <Hero />
+                    <Products />
+                    <Features />
+                    <Testimonials />
+                    <Footer />
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
